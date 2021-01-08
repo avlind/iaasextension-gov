@@ -1,6 +1,6 @@
 # SQL IaaS Agent Extension for Microsoft Azure Government 
 
-This repository is to help provide guidance and scripts on how to bulk register SQL Server Virtual Machines in Azure with the Azure SQL IaaS Agent Extension in Azure Government. To see how to review you can view the [video](https://www.youtube.com/watch?v=qmB3ufHN9Kk) on running scripts to register your SQL VMs.
+This repository is to help provide guidance and scripts on how to bulk register SQL Server Virtual Machines in Azure with the Azure SQL IaaS Agent Extension in Azure Government. To see the registration in action you can view the [video](https://www.youtube.com/watch?v=qmB3ufHN9Kk) on registering your SQL VMs.
 
 [![YoutubeLinkThumbnail](SQLIaaSVideoThumbnail.jpg)](https://www.youtube.com/watch?v=qmB3ufHN9Kk)
 
