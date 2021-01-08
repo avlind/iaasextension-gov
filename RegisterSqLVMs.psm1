@@ -22,7 +22,7 @@
     - The subscription whose VMs are to be registered, needs to be registered to Microsoft.SqlVirtualMachine resource provider first. This link describes
       how to register to a resource provider: https://docs.microsoft.com/azure/azure-resource-manager/resource-manager-supported-services
     - Run 'Connect-AzAccount' to first connect the powershell session to the azure account.
-    - The Client credentials must have one of the following RBAC levels of access over the virtual machine being registered: Virtual Machine Contributor,
+    - The authenticated must have one of the following RBAC levels of access over the virtual machine being registered: Virtual Machine Contributor,
       Contributor or Owner
     - The script requires Az powershell module (>=2.8.0) to be installed. Details on how to install Az module can be found 
       here : https://docs.microsoft.com/powershell/azure/install-az-ps?view=azps-2.8.0
@@ -54,7 +54,7 @@
     -----------------------------------------------------------------------------------------------------------------------------------------------
     Summary
     -----------------------------------------------------------------------------------------------------------------------------------------------
-    Number of Subscriptions registration failed for because you do not have access or credentials are wrong: 1
+    Number of Subscriptions registration failed for because you do not have access: 1
     Total VMs Found: 10
     VMs Already registered: 1
     Number of VMs registered successfully: 4
@@ -188,9 +188,6 @@ function Register-SqlVMs {
         return
     }
 
-    #get credential for connecting to subscription
-    $credential = Get-Credential -Credential $null
-
     #Update Globals
     update-Globals
 
@@ -200,20 +197,20 @@ function Register-SqlVMs {
         foreach ($SubscriptionName in $SubscriptionList) {
             [int]$percent = ($subsCompleted * 100) / $SubscriptionList.Count
             Write-Progress -Activity "Register SQL VMs in $($SubscriptionName) $($subsCompleted+1)/$($SubscriptionList.Count)" -Status "$percent% Complete:" -PercentComplete $percent -CurrentOperation "RegisterVMsInSub" -Id 1;
-            if (assert-Subscription -Subscription $SubscriptionName -Credential $credential) {
-                register-SqlVMForSubscription -Subscription $SubscriptionName -Credential $credential
+            if (assert-Subscription -Subscription $SubscriptionName) {
+                register-SqlVMForSubscription -Subscription $SubscriptionName
             }
             $subsCompleted++
         }
         Write-Progress -Activity "Register SQL VMs" -Status "100% Complete:" -PercentComplete 100 -CurrentOperation "RegisterVMsInSub" -Id 1 -Completed;
     }
-    elseif (assert-Subscription -Subscription $Subscription -Credential $credential) {
+    elseif (assert-Subscription -Subscription $Subscription) {
         if ($PsCmdlet.ParameterSetName -eq 'ResourceGroupList') {
             $rgsCompleted = 0
             foreach ($RgName in $ResourceGroupList) {
                 [int]$percent = ($rgsCompleted * 100) / $ResourceGroupList.Count
                 Write-Progress -Activity "Register SQL VMs in $($RgName) $($rgsCompleted+1)/$($ResourceGroupList.Count)" -Status "$percent% Complete:" -PercentComplete $percent -CurrentOperation "RegisterVMsInRG" -Id 1;
-                register-SqlVMForSubscription -Subscription $Subscription -ResourceGroup $RgName -Credential $credential
+                register-SqlVMForSubscription -Subscription $Subscription -ResourceGroup $RgName
                 $rgsCompleted++
             }
             Write-Progress -Activity "Register SQL VMs" -Status "100% Complete:" -PercentComplete 100 -CurrentOperation "RegisterVMsInRG" -Id 1 -Completed;
@@ -223,15 +220,13 @@ function Register-SqlVMs {
             foreach ($VmName in $VmList) {
                 [int]$percent = ($vmsCompleted * 100) / $VmList.Count
                 Write-Progress -Activity "Register SQL VMs $($vmsCompleted+1)/$($VmList.Count)" -Status "$percent% Complete:" -PercentComplete $percent -CurrentOperation "RegisterVMsInList" -Id 1;
-                register-SqlVMForSubscription -Subscription $Subscription -Credential $credential `
-                    -ResourceGroupName $ResourceGroupName -Name $VmName
+                register-SqlVMForSubscription -Subscription $Subscription -ResourceGroupName $ResourceGroupName -Name $VmName
                 $vmsCompleted++
             }
             Write-Progress -Activity "Register SQL VMs in List" -Status "100% Complete:" -PercentComplete 100 -CurrentOperation "RegisterVMsInList" -Id 1 -Completed;
         }
         else {
-            register-SqlVMForSubscription -Subscription $Subscription -Credential $credential `
-                -ResourceGroupName $ResourceGroupName -Name $Name
+            register-SqlVMForSubscription -Subscription $Subscription -ResourceGroupName $ResourceGroupName -Name $Name
         }
     }
 
@@ -546,7 +541,7 @@ function new-Report() {
     new-DashSeperator
 
     if ($Global:SubscriptionsFailedToConnect.count -gt 0) {
-        $errorMessage = "Number of Subscriptions registration failed for because you do not have access or credentials are incorrect: $($Global:SubscriptionsFailedToConnect.count)"
+        $errorMessage = "Number of Subscriptions registration failed for because you do not have access: $($Global:SubscriptionsFailedToConnect.count)"
         show-SubscriptionListForError -ErrorMessage $errorMessage -FailedSubList $Global:SubscriptionsFailedToConnect
     }
 
@@ -673,9 +668,6 @@ function new-ReportHelper(
     .PARAMETER Subscription
     Subscription for searching the VM
 
-    .PARAMETER Credential
-    Credential to connect to subscription
-
     .OUTPUTS
     System.Boolean true if successfully connected and RP is registered, else false
 #>
@@ -683,15 +675,11 @@ function assert-Subscription(
     [Parameter(Mandatory = $true)]
     [ValidateNotNullOrEmpty()]
     [string]
-    $Subscription,
-    [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    $Credential
+    $Subscription
 ) {
     #connect to the subscription
     $Global:Error.clear()
     #Original Line commented out below
-    #$tmp = Connect-AzAccount -Subscription $Subscription -Credential $Credential -ErrorAction SilentlyContinue
     #Modified line for use in Azure Government from Cloud Shell
     $tmp = Connect-AzAccount -EnvironmentName AzureUSGovernment -UseDeviceAuthentication -Subscription $Subscription -ErrorAction SilentlyContinue
     if ($Global:Error) {
@@ -727,9 +715,6 @@ function assert-Subscription(
     .PARAMETER Subscription
     Subscription for searching the VM
 
-    .PARAMETER Credential
-    Credential to connect to subscription
-
     .PARAMETER ResourceGroupName
     Name of the resourceGroup which needs to be searched for VMs
 
@@ -741,9 +726,6 @@ function register-SqlVMForSubscription (
     [ValidateNotNullOrEmpty()]
     [string]
     $Subscription,
-    [Parameter(Mandatory = $true)]
-    [ValidateNotNullOrEmpty()]
-    $Credential,
     [string] $ResourceGroupName,
     [string] $Name) {
     [System.Collections.ArrayList]$vmList = getVmList -ResourceGroupName $ResourceGroupName -Name $Name
