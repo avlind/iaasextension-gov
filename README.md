@@ -21,7 +21,3 @@ Disk Scaling<br><sub>Resize Data and Log disks from the Azure Portal</sub> | :x:
 Simplified Always On HA<br><sub>Create Availability Groups with Azure CLI (GUI in Preview as of Oct 2020)</sub> | :x: | :heavy_check_mark:
 Azure Key Vault Ingegration<br><sub>Configure Azure Key Vault for the SQL Server instance</sub> | :x: | :heavy_check_mark:
 Add'l Integration with Azure<br><sub>Tighter integration with Azure Defender, Vulnerability Assessment and<br>Monitoring services</sub> | CY21 | CY21
-
-### Coming soon to Azure Government
-
-Many of your will know that there is now an "Easy Button" that will help you conduct [auto-registration](https://docs.microsoft.com/en-us/azure/azure-sql/virtual-machines/windows/sql-agent-extension-automatic-registration-all-vms?tabs=azure-cli) of SQL Virtual Machines currently in Azure Commerical regions. While the capability doesn't exist in Azure Government today (Early Jan 2021), the engineering teams are working to enable the feature across Azure Government as well. Once that feature is available, expect this documentation to be updated.
